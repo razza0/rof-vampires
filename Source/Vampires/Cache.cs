@@ -9,6 +9,9 @@ namespace Vampire
         public static Dictionary<int, bool> IsDaylight = new Dictionary<int, bool>();
         public static Dictionary<int, int> IsDaylightLastRun = new Dictionary<int, int>();
 
+        public static Dictionary<int, bool> IsSunRisingOrDaylight = new Dictionary<int, bool>();
+        public static Dictionary<int, int> IsSunRisingOrDaylightLastRun = new Dictionary<int, int>();
+
         public static Dictionary<int, int> TicksPerMoveCardinal = new Dictionary<int, int>();
         public static Dictionary<int, int> TicksPerMoveCardinalLastRun = new Dictionary<int, int>();
 

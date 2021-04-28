@@ -110,30 +110,45 @@ namespace Vampire
             return p != null && p.Spawned && p?.MapHeld != null && p.MapHeld is Map m && IsSunRisingOrDaylight(m);
         }
         
-        private static Dictionary<Map, float> lastSunlightChecks = new Dictionary<Map, float>();
+        private static Dictionary<int, float> lastSunlightChecks = new Dictionary<int, float>();
 
         //Sunrise is very dangerous to be out.
         public static bool IsSunRisingOrDaylight(Map m)
         {
             //If it's daylight, it's not safe.
-            var curSunlight = GenCelestial.CurCelestialSunGlow(m);
-            if (GenCelestial.IsDaytime(curSunlight)) return true;
-
-            if (curSunlight > 0.01f)
+            if (!Cache.IsSunRisingOrDaylight.ContainsKey(m.uniqueID))
             {
-                var lastSunlight = 0f;
-                if (!lastSunlightChecks.ContainsKey(m))
-                {
-                    lastSunlightChecks.Add(m, curSunlight);
-                    lastSunlight = curSunlight;
-                }
-                else
-                {
-                    lastSunlight = lastSunlightChecks[m];
-                }
-                return curSunlight > lastSunlight;
+                Cache.IsSunRisingOrDaylightLastRun[m.uniqueID] = -9999;
+                Cache.IsSunRisingOrDaylight[m.uniqueID] = false;
             }
-            return false;
+            if (Find.TickManager.TicksGame > (Cache.IsSunRisingOrDaylightLastRun[m.uniqueID] + 416) || Find.TickManager.TicksGame < Cache.IsSunRisingOrDaylightLastRun[m.uniqueID])
+            {
+                Cache.IsSunRisingOrDaylightLastRun[m.uniqueID] = Find.TickManager.TicksGame;
+                var curSunlight = GenCelestial.CurCelestialSunGlow(m);
+                if (GenCelestial.IsDaytime(curSunlight))
+                {
+                    Cache.IsSunRisingOrDaylight[m.uniqueID] = true;
+                    return true;
+                }
+                if (curSunlight > 0.01f)
+                {
+                    var lastSunlight = 0f;
+                    if (!lastSunlightChecks.ContainsKey(m.uniqueID))
+                    {
+                        lastSunlightChecks.Add(m.uniqueID, curSunlight);
+                        lastSunlight = curSunlight;
+                    }
+                    else
+                    {
+                        lastSunlight = lastSunlightChecks[m.uniqueID];
+                    }
+                    Cache.IsSunRisingOrDaylight[m.uniqueID] = curSunlight > lastSunlight;
+                    return curSunlight > lastSunlight;
+                }
+                Cache.IsSunRisingOrDaylight[m.uniqueID] = false;
+                return false;
+            }
+            return Cache.IsSunRisingOrDaylight[m.uniqueID];
         }
 
         public static string MainDesc(Pawn pawn)
