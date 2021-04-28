@@ -573,8 +573,7 @@ namespace Vampire
                     //Log.Message("SunlightWatcher");
                     Pawn p = Pawn;
                     Map m = p.MapHeld;
-                    // Check what should be cheapest thing now that the result is cached first.
-                    if (VampireUtility.IsDaylight(m))
+                    if (!VampireUtility.IsDaylight(m))
                         return;
                     IntVec3 i = p.PositionHeld;
                     if (p.ParentHolder.IsEnclosingContainer())
