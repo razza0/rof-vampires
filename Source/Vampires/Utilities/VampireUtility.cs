@@ -62,13 +62,26 @@ namespace Vampire
         //=> (GenLocalDate.HourInteger(p) >= 6 && GenLocalDate.HourInteger(p) <= 17) && !Find.World.GameConditionManager.ConditionIsActive(GameConditionDefOf.Eclipse);
         public static bool IsDaylight(Map m)
         {
-            float num = GenCelestial.CurCelestialSunGlow(m);
-            if (GenCelestial.IsDaytime(num) && 
-                IsForcedDarknessConditionInactive(m))
+            if (!Cache.IsDaylight.ContainsKey(m.uniqueID))
             {
-                return true;
+                Cache.IsDaylightLastRun[m.uniqueID] = -9999;
+                Cache.IsDaylight[m.uniqueID] = false;
             }
-            return false;
+            if (Find.TickManager.TicksGame > (Cache.IsDaylightLastRun[m.uniqueID] + 416) || Find.TickManager.TicksGame < Cache.IsDaylightLastRun[m.uniqueID])
+            {
+                Cache.IsDaylightLastRun[m.uniqueID] = Find.TickManager.TicksGame;
+                float num = GenCelestial.CurCelestialSunGlow(m);
+                if (GenCelestial.IsDaytime(num) &&
+                    IsForcedDarknessConditionInactive(m))
+                {
+                    Cache.IsDaylight[m.uniqueID] = true;
+                    return true;
+                }
+                Cache.IsDaylight[m.uniqueID] = false;
+                return false;
+            }
+
+            return Cache.IsDaylight[m.uniqueID];
         }
 
         public static bool IsForcedDarknessConditionInactive(Map m)

@@ -11,7 +11,8 @@ namespace Vampire
     {
         public static readonly int TicksFromDarknessToSunlight = 9700; //1 minute 37 seconds from darkness (0% lit) to sunrise (60% lit)
         public static readonly int TicksBetweenLightChanges = 130; //TicksFromDarknessToSunlight by 60. This is one unit between percent changes.
-        public static readonly int TicksOfSurvivingSunlight = 1800; //30 real seconds in sunlight is when burning begins.
+        public static readonly int TicksOfSurvivingSunlight = 2000; //30 real seconds in sunlight is when burning begins. (1800 + an extra 200 to help account for cached sunlight level)
+        public static readonly int TicksOfSurvivingSunlight075 = (int)(TicksOfSurvivingSunlight* 0.75f); // No need to recalculate this every time.
         
         public static Dictionary<Pawn, int> LastCheckedHashTable = new Dictionary<Pawn, int>();
         //Simple table to prevent overchecking.
@@ -330,10 +331,11 @@ namespace Vampire
         /// <returns></returns>
         public static bool IsSunlightSafeFor(this IntVec3 targ, Pawn pawn)
         {
+            bool CanArriveBeforeSunlight = targ.CanArriveBeforeSunlight(pawn);
             if (targ.Roofed(pawn.MapHeld) && 
-                (TargetIsInTheSameRoom(targ, pawn) || CanSurviveTimeInSunlight(targ, pawn) || targ.CanArriveBeforeSunlight(pawn))) 
+                (TargetIsInTheSameRoom(targ, pawn) || CanSurviveTimeInSunlight(targ, pawn) || CanArriveBeforeSunlight))
                 return true;
-            if (!targ.Roofed(pawn.MapHeld) && targ.CanArriveBeforeSunlight(pawn))
+            if (!targ.Roofed(pawn.MapHeld) && CanArriveBeforeSunlight)
                 return true;
             return false;
         }
@@ -385,9 +387,9 @@ namespace Vampire
                 int sunExpTicks = 0;
                 if (pawn?.health?.hediffSet?.GetFirstHediffOfDef(VampDefOf.ROMV_SunExposure) is HediffWithComps_SunlightExposure sunExp)
                 {
-                    sunExpTicks = (int)(TicksOfSurvivingSunlight * 0.75f * sunExp.CurStageIndex);
+                    sunExpTicks = TicksOfSurvivingSunlight075 * sunExp.CurStageIndex;
                 }
-                int ticksToArrive = cellsInSunlight * pawn.TicksPerMoveDiagonal + sunExpTicks;
+                int ticksToArrive = cellsInSunlight * Cache.getTicksPerMoveDiagonal(pawn) + sunExpTicks;
                 if (ticksToArrive > TicksOfSurvivingSunlight)
                 {
                     return false;
@@ -429,7 +431,7 @@ namespace Vampire
         {
             int ticksUntilArrival = 0;
             if (pawn.PositionHeld == targ) return ticksUntilArrival;
-            int ticksPerMove = pawn.TicksPerMoveCardinal;
+            int ticksPerMove = Cache.getTicksPerMoveCardinal(pawn);
             int distanceToPoint = (int)pawn.PositionHeld.DistanceTo(targ);
             //int distanceToPoint = (int)pawn.PositionHeld.DistanceTo(targ);
             ticksUntilArrival = distanceToPoint * ticksPerMove;

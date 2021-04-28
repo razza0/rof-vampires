@@ -566,19 +566,22 @@ namespace Vampire
 
         public void SunlightWatcherTick()
         {
-            if (Find.TickManager.TicksGame % 60 == 0)
+            if (Find.TickManager.TicksGame % 416 == 0)
             {
                 try
                 {
                     //Log.Message("SunlightWatcher");
                     Pawn p = Pawn;
                     Map m = p.MapHeld;
+                    // Check what should be cheapest thing now that the result is cached first.
+                    if (VampireUtility.IsDaylight(m))
+                        return;
                     IntVec3 i = p.PositionHeld;
                     if (p.ParentHolder.IsEnclosingContainer())
                         return;
                     if (p.IsAlreadyDoingSunlightPathJob())
                         return;
-                    if (p.Spawned && VampireUtility.IsDaylight(m) && !i.Roofed(m))
+                    if (p.Spawned && !i.Roofed(m))
                     {
                         ThinkNode_JobGiver thinkNodeJobGiver =
                             (ThinkNode_JobGiver) Activator.CreateInstance(typeof(JobGiver_SeekShelterFromSunlight));

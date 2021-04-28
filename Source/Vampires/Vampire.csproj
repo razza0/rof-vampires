@@ -60,6 +60,7 @@
     <Compile Include="AI_Jobs\JobGiver_ShareBlood.cs" />
     <Compile Include="Buildings\Building_CoffinSealed.cs" />
     <Compile Include="Buttons.cs" />
+    <Compile Include="Cache.cs" />
     <Compile Include="Components\CompAntiVampireWeapon.cs" />
     <Compile Include="Components\CompAssignableToPawn_VampireBed.cs" />
     <Compile Include="Components\CompProperties_AntiVampireWeapon.cs" />
