@@ -96,8 +96,24 @@ namespace Vampire
                 new HarmonyMethod(typeof(HarmonyPatches), nameof(VampiresDontHaveDrugSchedules)), null);
             //Log.Message("87");
 
+            //harmony.Patch(AccessTools.Method(typeof(Pawn_HealthTracker),
+            //        nameof(Pawn_HealthTracker.ShouldBeDeadFromRequiredCapacity)),
+            //    null, null, new HarmonyMethod(typeof(HarmonyPatches), nameof(VampiresHaveNoLungsTranspiler)));
 
+            // Patch PawnCapacitiesHandler.CapableOf to ignore lungs on vampires
+            harmony.Patch(AccessTools.Method(typeof(PawnCapacitiesHandler),
+                nameof(PawnCapacitiesHandler.CapableOf)),
+                new HarmonyMethod(typeof(HarmonyPatches), nameof(VampiresDontNeedLungs)), null);
 
+            // Attempt to patch DeathRattle's AddCustomHediffs method
+            try
+            {
+                harmony.Patch(AccessTools.Method(AccessTools.TypeByName("DeathRattle.Harmony.ShouldBeDeadFromRequiredCapacityPatch"), "AddCustomHediffs"),
+                    new HarmonyMethod(typeof(HarmonyPatches), nameof(VampiresDontNeedLungsDeathRattle)), null);
+            }
+            catch 
+            {
+            }
         }
 
 
@@ -365,9 +381,61 @@ namespace Vampire
 
         }
 
+        /*[HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> VampiresHaveNoLungsTranspiler(IEnumerable<CodeInstruction> instrs, ILGenerator gen)
+        {
+            foreach (CodeInstruction itr in instrs)
+            {
+                if (itr.opcode == OpCodes.Call && itr.operand.Equals(AccessTools.Method(typeof(DefDatabase<PawnCapacityDef>), "get_AllDefsListForReading", new Type[] { })))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Pawn_HealthTracker), "pawn"));
+                    yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(HarmonyPatches), "VampGetPawnCapacityDefs", new Type[] { typeof(Pawn) }));
+                }
+                else if (itr.opcode == OpCodes.Ldnull)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldstr, "Finishing AllDefsListForReading");
+                    yield return new CodeInstruction(OpCodes.Ldc_I4_0);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Log), "Message", new Type[] { typeof(String), typeof(bool) }));
+                    yield return new CodeInstruction(OpCodes.Ldnull);
+                }
+                else
+                {
+                    yield return itr;
+                }
+            }
+        }
 
+        public static List<PawnCapacityDef> VampGetPawnCapacityDefs(Pawn p)
+        {
+            List<PawnCapacityDef> allDefsListForReading = DefDatabase<PawnCapacityDef>.AllDefsListForReading;
+            if (p.IsVampire())
+            {
+                allDefsListForReading.Remove(PawnCapacityDefOf.Breathing);
+            }
+            return allDefsListForReading;
+        }*/
 
+        // Exit early is pawn is a vampire and we're checking Breathing.
+        public static bool VampiresDontNeedLungs(PawnCapacitiesHandler __instance, PawnCapacityDef capacity, ref bool __result, Pawn ___pawn)
+        {
+            if (capacity == PawnCapacityDefOf.Breathing && ___pawn.IsVampire())
+            {
+                __result = true;
+                return false;
+            }
+            return true;
+        }
 
+        // Exit early is pawn is a vampire and we're checking Breathing.
+        public static bool VampiresDontNeedLungsDeathRattle(PawnCapacityDef pawnCapacityDef, ref bool __result, Pawn pawn)
+        {
+            if (pawnCapacityDef == PawnCapacityDefOf.Breathing && pawn.IsVampire())
+            {
+                __result = true;
+                return false;
+            }
+            return true;
+        }
     }
-
 }
